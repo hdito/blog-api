@@ -4,6 +4,7 @@ import apiController from "./routes/apiController";
 import { Env } from "./utils/env";
 import { errorHadler } from "./utils/errorHandler";
 import { notFoundHandler } from "./utils/notFoundHandler";
+import cors from "cors";
 
 mongoose.connect(Env.DB_URL);
 const db = mongoose.connection;
@@ -11,6 +12,18 @@ db.on("error", () => console.error("Mongo connection error"));
 
 const app = express();
 
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      const whiteList = Env.SUPPORTED_URLS.split(" ");
+      if (whiteList.indexOf(origin!) !== -1 || !origin) {
+        cb(null, true);
+      } else {
+        cb(new Error("Not allowed by CORS"));
+      }
+    },
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

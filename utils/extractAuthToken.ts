@@ -10,7 +10,9 @@ export async function extractAuthToken(
   const token = req.header("Authorization")?.replace("Bearer ", "");
 
   if (!token) {
-    return res.status(401).json({ error: "Authentication required" });
+    return res
+      .status(401)
+      .json({ status: "error", message: "Authentication required" });
   }
 
   try {
@@ -29,6 +31,9 @@ export async function extractAuthToken(
   } catch (error) {
     return res
       .status(403)
-      .json({ error: "You haven't got permission for this" });
+      .json({
+        status: "error",
+        message: "You haven't got permission for this",
+      });
   }
 }

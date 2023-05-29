@@ -6,5 +6,5 @@ export function errorHadler(
   res: Response,
   next: NextFunction
 ) {
-  res.status(500).json({ error: "Unknown error" });
+  res.status(500).json({ status: "error", message: "Unknown error" });
 }

@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { body, validationResult } from "express-validator";
 import { User } from "../models/user";
+import { errorFactory } from "../utils/errorFactory";
+import { failFactory } from "../utils/failFactory";
+import { successFactory } from "../utils/successFactory";
+import { formatErrors } from "../utils/formatErrors";
 
 const signUpController = Router();
 
@@ -45,16 +49,16 @@ signUpController.post(
   body("password")
     .trim()
     .escape()
-    .isStrongPassword()
+    .isStrongPassword({ minSymbols: 0 })
     .withMessage(
-      "Password must contain at least 8 characters and constist of special symbols, numbers, uppercase and lowercase letters"
+      "Password must contain at least 8 characters and constist of numbers, uppercase and lowercase letters"
     ),
   body("password2")
     .trim()
     .escape()
-    .isStrongPassword({ minLength: 8, minNumbers: 1 })
+    .isStrongPassword({ minSymbols: 0 })
     .withMessage(
-      "Password must contain at least 8 characters and constist of special symbols, numbers, uppercase and lowercase letters"
+      "Password must contain at least 8 characters and constist of numbers, uppercase and lowercase letters"
     )
     .custom((value, { req }) => {
       return value === req.body.password;
@@ -63,7 +67,9 @@ signUpController.post(
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ error: errors.array() });
+      return res
+        .status(400)
+        .json(failFactory(errors.formatWith(formatErrors).mapped()));
     }
 
     const user = new User({
@@ -76,9 +82,9 @@ signUpController.post(
     try {
       await user.save();
     } catch (error) {
-      res.status(500).json({ error: "Error on signing up" });
+      res.status(500).json(errorFactory("Error on signing up"));
     }
-    return res.status(200).json({ message: "You've successfully signed up" });
+    return res.status(200).json(successFactory());
   }
 );
 

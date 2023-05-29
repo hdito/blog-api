@@ -1,8 +1,12 @@
 import { Router } from "express";
-import { extractAuthToken } from "../utils/extractAuthToken";
-import { Post } from "../models/post";
 import { body, validationResult } from "express-validator";
+import { Post } from "../models/post";
 import { checkIsValidRole } from "../utils/checkIsValidRole";
+import { errorFactory } from "../utils/errorFactory";
+import { extractAuthToken } from "../utils/extractAuthToken";
+import { failFactory } from "../utils/failFactory";
+import { successFactory } from "../utils/successFactory";
+import { formatErrors } from "../utils/formatErrors";
 
 const postsController = Router();
 
@@ -16,15 +20,12 @@ postsController.get(
     }
 
     try {
-      const posts = await Post.find(
-        { isPublished: true },
-        { isPublished: false }
-      )
+      const posts = await Post.find({ isPublished: true })
         .sort({ createdAt: -1 })
         .populate("author", "_id username");
-      return res.json({ posts });
+      return res.status(200).json(successFactory({ posts }));
     } catch (error) {
-      return res.status(500).json({ error: "Error on loading posts" });
+      return res.status(500).json(errorFactory("Error on loading posts"));
     }
   },
   extractAuthToken,
@@ -34,9 +35,9 @@ postsController.get(
       const posts = await Post.find({ author: req!.user!.id }).sort({
         createdAt: -1,
       });
-      return res.status(200).json({ posts });
+      return res.status(200).json(successFactory({ posts }));
     } catch (error) {
-      return res.status(500).json({ error: "Unknown error has occured" });
+      return res.status(500).json(errorFactory("Unknown error has occured"));
     }
   }
 );
@@ -54,9 +55,11 @@ postsController.post(
   body("description").trim().escape(),
   body("content").trim().escape(),
   async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ error: errors.array() });
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      return res
+        .status(400)
+        .json(failFactory(result.formatWith(formatErrors).mapped()));
     }
 
     const post = new Post({
@@ -67,11 +70,9 @@ postsController.post(
     });
     try {
       await post.save();
-      return res
-        .status(200)
-        .json({ message: "You've successfully created post", post });
+      return res.status(200).json(successFactory({ post }));
     } catch (error) {
-      return res.status(500).json({ error: "Error on saving post" });
+      return res.status(500).json(errorFactory("Error on saving post"));
     }
   }
 );
@@ -80,10 +81,10 @@ postsController.get("/:postId", async (req, res) => {
   const { postId } = req.params;
   try {
     const post = await Post.findById(postId).populate("author", "_id username");
-    if (!post) return res.status(404).json({ error: "Post not found" });
-    return res.json({ post });
+    if (!post) return res.status(404).json(errorFactory("Post not found"));
+    return res.status(200).json({ post });
   } catch (error) {
-    return res.status(500).json({ error: "Error on loading post" });
+    return res.status(500).json(errorFactory("Error on loading post"));
   }
 });
 
@@ -105,18 +106,22 @@ postsController.put(
     .not()
     .isEmpty()
     .withMessage("Description can't be empty")
-    .optional(),
+    .optional({ values: "falsy" }),
   body("content")
     .trim()
     .escape()
     .not()
     .isEmpty()
-    .withMessage("Description can't be empty")
-    .optional(),
+    .withMessage("Content can't be empty")
+    .optional({ values: "falsy" }),
   async (req, res) => {
     const errors = validationResult(req);
+
+    console.log(errors.array());
     if (!errors.isEmpty()) {
-      return res.status(400).json({ error: errors.array() });
+      return res
+        .status(400)
+        .json(failFactory(errors.formatWith(formatErrors).mapped()));
     }
 
     const updatePayload: {
@@ -132,32 +137,36 @@ postsController.put(
       "content",
     ] as const;
     allowedKeys.forEach((key) => {
-      if (req.body[key]) {
+      if (req.body[key] !== undefined) {
         updatePayload[key] = req.body[key];
       }
     });
-    if (Object.keys(updatePayload).length === 0) {
-      return res.status(200).json({ message: "Post update was successfull" });
-    }
-
     const { postId } = req.params;
+
+    console.log(req.body);
 
     try {
       const post = await Post.findById(postId);
+
       if (!post) {
-        return res.status(404).json({ error: "There is no such post" });
+        return res.status(404).json(errorFactory("There is no such post"));
       }
 
-      if (post.author.toString() === req!.user!.id) {
-        await Post.findByIdAndUpdate(postId, updatePayload);
-        return res.status(200).json({ message: "Post update was successfull" });
+      if (post.author.toString() !== req!.user!.id) {
+        return res
+          .status(403)
+          .json(errorFactory("You have no permission for this"));
       }
 
-      return res.status(403).json({ error: "You have no permission for this" });
+      if (Object.keys(updatePayload).length === 0) {
+        console.log("Empty payload");
+        return res.status(200).json(successFactory());
+      }
+
+      await Post.findByIdAndUpdate(postId, updatePayload);
+      return res.status(200).json(successFactory());
     } catch (error) {
-      return res
-        .status(500)
-        .json({ error: "Error on post update has occured" });
+      return res.status(500).json(errorFactory("Unknwon error has occured"));
     }
   }
 );
@@ -171,20 +180,22 @@ postsController.delete(
     try {
       const post = await Post.findById(postId);
 
-      if (!post) return res.status(204).json({});
+      if (!post) return res.status(204).json(successFactory());
       if (
-        req!.user!.id === post?.author.toString() ||
-        (req!.user!.role === "admin" && post?.isPublished === true)
+        !(
+          req!.user!.id === post?.author.toString() ||
+          (req!.user!.role === "admin" && post?.isPublished === true)
+        )
       ) {
-        await Post.findByIdAndDelete(postId);
-        return res.status(204).json({});
+        return res
+          .status(403)
+          .json(errorFactory("You haven't got permission for this"));
       }
 
-      return res
-        .status(403)
-        .json({ error: "You haven't got permission for this" });
+      await Post.findByIdAndDelete(postId);
+      return res.status(204).json(successFactory());
     } catch (error) {
-      return res.status(500).json({ error: "Error on deleting post" });
+      return res.status(500).json(errorFactory("Unknown error has occured"));
     }
   }
 );

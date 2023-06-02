@@ -13,26 +13,23 @@ const signInController = Router();
 
 signInController.post(
   "/sign-in",
-  oneOf(
-    [
-      body("username")
-        .trim()
-        .escape()
-        .not()
-        .isEmpty()
-        .withMessage("Username can't be empty"),
 
-      body("email")
-        .trim()
-        .escape()
-        .not()
-        .isEmpty()
-        .withMessage("Email can't be empty")
-        .isEmail()
-        .withMessage("Invalid email format"),
-    ],
-    { errorType: "flat" }
-  ),
+  body("username")
+    .trim()
+    .escape()
+    .if((value, { req }) => !(req.body.email && !req.body.username))
+    .not()
+    .isEmpty()
+    .withMessage("Username can't be empty"),
+  body("email")
+    .trim()
+    .escape()
+    .not()
+    .if((value, { req }) => !(!req.body.email && req.body.username))
+    .isEmpty()
+    .withMessage("Email can't be empty")
+    .isEmail()
+    .withMessage("Invalid email format"),
   body("password")
     .trim()
     .escape()
@@ -41,31 +38,48 @@ signInController.post(
     .withMessage("Password can't be empty"),
   async (req, res) => {
     const result = validationResult(req);
+    console.log(result.array());
     if (!result.isEmpty()) {
       return res
         .status(400)
-        .json(failFactory(result.formatWith(formatErrors).mapped()));
+        .json(
+          failFactory(
+            result.formatWith(formatErrors).array({ onlyFirstError: true })
+          )
+        );
     }
 
     try {
-      const filter =
-        typeof req.body.username === "string"
-          ? { username: req.body.username as string }
-          : { email: req.body.email as string };
+      const filter = req.body.username
+        ? { username: req.body.username as string }
+        : { email: req.body.email as string };
       const user = await User.findOne(filter);
       if (!user) {
         if (filter.username)
-          return res
-            .status(400)
-            .json(failFactory({ username: "Invalid username" }));
-        return res.status(400).json(failFactory({ email: "Invalid email" }));
+          return res.status(400).json(
+            failFactory([
+              {
+                path: "username",
+                message: "There is no user with such username",
+              },
+            ])
+          );
+        return res
+          .status(400)
+          .json(
+            failFactory([
+              { path: "email", message: "There is no user with such email" },
+            ])
+          );
       }
 
       const isPasswordValid = await compare(req.body.password, user.password);
       if (!isPasswordValid) {
         return res
           .status(400)
-          .json(failFactory({ password: "Invalid password" }));
+          .json(
+            failFactory([{ message: "Invalid password", path: "password" }])
+          );
       }
 
       const token = await new Promise<string>((resolve, reject) => {

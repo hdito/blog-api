@@ -69,7 +69,11 @@ signUpController.post(
     if (!errors.isEmpty()) {
       return res
         .status(400)
-        .json(failFactory(errors.formatWith(formatErrors).mapped()));
+        .json(
+          failFactory(
+            errors.formatWith(formatErrors).array({ onlyFirstError: true })
+          )
+        );
     }
 
     const user = new User({

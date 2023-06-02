@@ -13,16 +13,25 @@ const postsController = Router();
 postsController.get(
   "/",
   async (req, res, next) => {
-    const { type } = req.query;
+    const { type, populate } = req.query;
 
     if (type === "own") {
       return next();
     }
 
     try {
-      const posts = await Post.find({ isPublished: true })
-        .sort({ createdAt: -1 })
-        .populate("author", "_id username");
+      if (populate === "author") {
+        const posts = await Post.find({ isPublished: true })
+          .sort({
+            createdAt: -1,
+          })
+          .populate("author", "_id username");
+        return res.status(200).json(successFactory({ posts }));
+      }
+
+      const posts = await Post.find({ isPublished: true }).sort({
+        createdAt: -1,
+      });
       return res.status(200).json(successFactory({ posts }));
     } catch (error) {
       return res.status(500).json(errorFactory("Error on loading posts"));
@@ -31,7 +40,17 @@ postsController.get(
   extractAuthToken,
   checkIsValidRole,
   async (req, res) => {
+    const { populate } = req.query;
     try {
+      if (populate === "author") {
+        const posts = await Post.find({ author: req!.user!.id })
+          .sort({
+            createdAt: -1,
+          })
+          .populate("author", "_id username");
+        return res.status(200).json(successFactory({ posts }));
+      }
+
       const posts = await Post.find({ author: req!.user!.id }).sort({
         createdAt: -1,
       });
@@ -59,7 +78,7 @@ postsController.post(
     if (!result.isEmpty()) {
       return res
         .status(400)
-        .json(failFactory(result.formatWith(formatErrors).mapped()));
+        .json(failFactory(result.formatWith(formatErrors).array()));
     }
 
     const post = new Post({
@@ -77,16 +96,51 @@ postsController.post(
   }
 );
 
-postsController.get("/:postId", async (req, res) => {
-  const { postId } = req.params;
-  try {
-    const post = await Post.findById(postId).populate("author", "_id username");
-    if (!post) return res.status(404).json(errorFactory("Post not found"));
-    return res.status(200).json({ post });
-  } catch (error) {
-    return res.status(500).json(errorFactory("Error on loading post"));
+postsController.get(
+  "/:postId",
+  async (req, res, next) => {
+    const { type, populate } = req.query;
+    if (type === "preview") return next();
+
+    const { postId } = req.params;
+    try {
+      const post = await Post.findById(postId);
+
+      if (!post) return res.status(404).json(errorFactory("Post not found"));
+      if (!post.isPublished)
+        return res
+          .status(403)
+          .json(errorFactory("You haven't got permission for this"));
+
+      if (populate === "author") {
+        await post.populate("author", "_id username");
+      }
+      return res.status(200).json(successFactory({ post }));
+    } catch (error) {
+      return res.status(500).json(errorFactory("Error on loading post"));
+    }
+  },
+  extractAuthToken,
+  checkIsValidRole,
+  async (req, res) => {
+    const { postId } = req.params;
+    const { populate } = req.query;
+    try {
+      const post = await Post.findById(postId);
+      if (!post) return res.status(404).json(errorFactory("Post not found"));
+      if (post.author._id.toString() !== req.user!.id)
+        return res
+          .status(403)
+          .json(errorFactory("You haven't got permission for this"));
+      if (populate === "author") {
+        await post.populate("author", "_id username");
+      }
+      return res.status(200).json(successFactory({ post }));
+    } catch (error) {
+      return res.status(500).json(errorFactory("Error on loading post"));
+    }
   }
-});
+);
 
 postsController.put(
   "/:postId",
@@ -116,12 +170,10 @@ postsController.put(
     .optional({ values: "falsy" }),
   async (req, res) => {
     const errors = validationResult(req);
-
-    console.log(errors.array());
     if (!errors.isEmpty()) {
       return res
         .status(400)
-        .json(failFactory(errors.formatWith(formatErrors).mapped()));
+        .json(failFactory(errors.formatWith(formatErrors).array()));
     }
 
     const updatePayload: {
@@ -142,8 +194,6 @@ postsController.put(
       }
     });
     const { postId } = req.params;
-
-    console.log(req.body);
 
     try {
       const post = await Post.findById(postId);

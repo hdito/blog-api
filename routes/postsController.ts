@@ -38,7 +38,7 @@ postsController.get(
     }
   },
   extractAuthToken,
-  checkIsValidRole,
+  checkIsValidRole(["author", "admin"]),
   async (req, res) => {
     const { populate } = req.query;
     try {
@@ -64,7 +64,7 @@ postsController.get(
 postsController.post(
   "/",
   extractAuthToken,
-  checkIsValidRole,
+  checkIsValidRole(["author", "admin"]),
   body("title")
     .trim()
     .escape()
@@ -121,7 +121,7 @@ postsController.get(
     }
   },
   extractAuthToken,
-  checkIsValidRole,
+  checkIsValidRole(["author", "admin"]),
   async (req, res) => {
     const { postId } = req.params;
     const { populate } = req.query;
@@ -145,7 +145,7 @@ postsController.get(
 postsController.put(
   "/:postId",
   extractAuthToken,
-  checkIsValidRole,
+  checkIsValidRole(["user", "admin"]),
   body("isPublished").isBoolean().optional(),
   body("title")
     .trim()
@@ -224,7 +224,7 @@ postsController.put(
 postsController.delete(
   "/:postId",
   extractAuthToken,
-  checkIsValidRole,
+  checkIsValidRole(["user", "admin"]),
   async (req, res) => {
     const { postId } = req.params;
     try {

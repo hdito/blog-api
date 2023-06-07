@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { body, validationResult } from "express-validator";
+import { body, query, validationResult } from "express-validator";
 import { Post } from "../models/post";
 import { checkIsValidRole } from "../utils/checkIsValidRole";
 import { errorFactory } from "../utils/errorFactory";
 import { extractAuthToken } from "../utils/extractAuthToken";
 import { failFactory } from "../utils/failFactory";
-import { successFactory } from "../utils/successFactory";
 import { formatErrors } from "../utils/formatErrors";
+import { successFactory } from "../utils/successFactory";
 
 const postsController = Router();
 
@@ -98,23 +98,33 @@ postsController.post(
 
 postsController.get(
   "/:postId",
+  query("type").isString().optional(),
+  query("populate").isString().optional(),
   async (req, res, next) => {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      return res
+        .status(400)
+        .json(failFactory(result.formatWith(formatErrors).array()));
+    }
+
     const { type, populate } = req.query;
     if (type === "preview") return next();
 
     const { postId } = req.params;
     try {
-      const post = await Post.findById(postId);
+      const postQuery = Post.findById(postId);
+      if (populate === "author") {
+        postQuery.populate("author", "_id username");
+      }
 
+      const post = await postQuery;
       if (!post) return res.status(404).json(errorFactory("Post not found"));
       if (!post.isPublished)
         return res
           .status(403)
           .json(errorFactory("You haven't got permission for this"));
 
-      if (populate === "author") {
-        await post.populate("author", "_id username");
-      }
       return res.status(200).json(successFactory({ post }));
     } catch (error) {
       return res.status(500).json(errorFactory("Error on loading post"));

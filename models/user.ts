@@ -1,5 +1,5 @@
 import { CallbackError, Schema, model } from "mongoose";
-import { hash } from "bcryptjs";
+import bcrypt from "bcryptjs";
 
 const UserSchema = new Schema({
   username: { type: String, required: true, unique: true },
@@ -13,7 +13,7 @@ UserSchema.pre("save", async function (next) {
     next();
   }
   try {
-    const hashedPassword = await hash(this.password, 10);
+    const hashedPassword = await bcrypt.hash(this.password, 10);
     this.password = hashedPassword;
     next();
   } catch (error) {

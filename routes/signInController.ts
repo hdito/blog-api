@@ -1,13 +1,13 @@
-import { compare } from "bcryptjs";
+import bcrypt from "bcryptjs";
 import { Router } from "express";
-import { body, oneOf, validationResult } from "express-validator";
+import { body, validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user";
 import { Env } from "../utils/env";
 import { errorFactory } from "../utils/errorFactory";
 import { failFactory } from "../utils/failFactory";
-import { successFactory } from "../utils/successFactory";
 import { formatErrors } from "../utils/formatErrors";
+import { successFactory } from "../utils/successFactory";
 
 const signInController = Router();
 
@@ -38,7 +38,6 @@ signInController.post(
     .withMessage("Password can't be empty"),
   async (req, res) => {
     const result = validationResult(req);
-    console.log(result.array());
     if (!result.isEmpty()) {
       return res
         .status(400)
@@ -73,7 +72,10 @@ signInController.post(
           );
       }
 
-      const isPasswordValid = await compare(req.body.password, user.password);
+      const isPasswordValid = await bcrypt.compare(
+        req.body.password,
+        user.password
+      );
       if (!isPasswordValid) {
         return res
           .status(400)

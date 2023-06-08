@@ -5,6 +5,11 @@ import { Env } from "./utils/env";
 import { errorHadler } from "./utils/errorHandler";
 import { notFoundHandler } from "./utils/notFoundHandler";
 import cors from "cors";
+import compression from "compression";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+
+const whitelist = Env.SUPPORTED_URLS.split(" ");
 
 mongoose
   .connect(Env.DB_URL)
@@ -15,10 +20,19 @@ db.on("error", () => console.error("Mongo connection error"));
 const app = express();
 
 app.use(
+  rateLimit({
+    max: 15,
+  })
+);
+app.use(compression());
+app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(
   cors({
     origin: (origin, cb) => {
-      const whiteList = Env.SUPPORTED_URLS.split(" ");
-      if (whiteList.indexOf(origin!) !== -1 || !origin) {
+      if (
+        (origin && whitelist.includes(origin)) ||
+        (Env.NODE_ENV === "development" && !origin)
+      ) {
         cb(null, true);
       } else {
         cb(new Error("Not allowed by CORS"));
@@ -34,6 +48,6 @@ app.use("/api", apiController);
 app.use(notFoundHandler);
 app.use(errorHadler);
 
-app.listen(Env.SERVER_PORT, () =>
-  console.log(`Server is running on port ${Env.SERVER_PORT}`)
+app.listen(Env.PORT, () =>
+  console.log(`Server is running on port ${Env.PORT}`)
 );

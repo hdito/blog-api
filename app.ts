@@ -6,7 +6,9 @@ import { errorHadler } from "./utils/errorHandler";
 import { notFoundHandler } from "./utils/notFoundHandler";
 import cors from "cors";
 
-mongoose.connect(Env.DB_URL);
+mongoose
+  .connect(Env.DB_URL)
+  .catch(() => console.error("Mongo connection error"));
 const db = mongoose.connection;
 db.on("error", () => console.error("Mongo connection error"));
 

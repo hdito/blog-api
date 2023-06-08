@@ -155,7 +155,7 @@ postsController.get(
 postsController.put(
   "/:postId",
   extractAuthToken,
-  checkIsValidRole(["user", "admin"]),
+  checkIsValidRole(["author", "admin"]),
   body("isPublished").isBoolean().optional(),
   body("title")
     .trim()
@@ -211,7 +211,6 @@ postsController.put(
       if (!post) {
         return res.status(404).json(errorFactory("There is no such post"));
       }
-
       if (post.author.toString() !== req!.user!.id) {
         return res
           .status(403)
@@ -219,7 +218,6 @@ postsController.put(
       }
 
       if (Object.keys(updatePayload).length === 0) {
-        console.log("Empty payload");
         return res.status(200).json(successFactory());
       }
 

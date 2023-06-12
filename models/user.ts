@@ -2,9 +2,19 @@ import { CallbackError, Schema, model } from "mongoose";
 import bcrypt from "bcryptjs";
 
 const UserSchema = new Schema({
-  username: { type: String, required: true, unique: true },
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    set: (value: string) => value.toLowerCase(),
+  },
   displayName: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    set: (value: string) => value.toLowerCase(),
+  },
   password: { type: String, required: true },
   role: { type: String, enum: ["author", "admin", "user"], required: true },
 });

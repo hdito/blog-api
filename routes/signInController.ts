@@ -33,8 +33,7 @@ signInController.post(
   body("password")
     .trim()
     .escape()
-    .not()
-    .isEmpty()
+    .notEmpty()
     .withMessage("Password can't be empty"),
   async (req, res) => {
     const result = validationResult(req);

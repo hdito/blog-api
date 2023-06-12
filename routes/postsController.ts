@@ -73,6 +73,7 @@ postsController.post(
     .withMessage("Title can't be empty"),
   body("description").trim().escape(),
   body("content").trim().escape(),
+  body("isPublished").isBoolean().optional(),
   async (req, res) => {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -86,6 +87,8 @@ postsController.post(
       description: req.body.description,
       content: req.body.content,
       author: req!.user!.id,
+      isPublished:
+        req.body.isPublished !== undefined ? req.body.isPublished : false,
     });
     try {
       await post.save();

@@ -13,12 +13,13 @@ signUpController.post(
   body("username")
     .trim()
     .escape()
-    .not()
-    .isEmpty()
+    .notEmpty()
     .withMessage("Username can't be empty")
     .custom(async (value) => {
       try {
-        const existingUser = await User.findOne({ username: value });
+        const existingUser = await User.findOne({
+          username: (value as string).toLowerCase(),
+        });
         if (existingUser) {
           throw Error("Username is already in use");
         }
@@ -31,9 +32,9 @@ signUpController.post(
   body("email")
     .trim()
     .escape()
-    .not()
-    .isEmpty()
+    .notEmpty()
     .withMessage("Email can't be empty")
+    .toLowerCase()
     .custom(async (value) => {
       try {
         const existingUser = await User.findOne({ email: value });
@@ -76,8 +77,10 @@ signUpController.post(
         );
     }
 
+    const username = (req.body.username as string).toLowerCase();
     const user = new User({
-      username: req.body.username,
+      username,
+      displayName: req.body.username,
       email: req.body.email,
       password: req.body.password,
       role: "user",
@@ -85,10 +88,10 @@ signUpController.post(
 
     try {
       await user.save();
+      return res.status(200).json(successFactory());
     } catch (error) {
-      res.status(500).json(errorFactory("Error on signing up"));
+      return res.status(500).json(errorFactory("Error on signing up"));
     }
-    return res.status(200).json(successFactory());
   }
 );
 

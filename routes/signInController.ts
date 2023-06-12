@@ -18,18 +18,18 @@ signInController.post(
     .trim()
     .escape()
     .if((value, { req }) => !(req.body.email && !req.body.username))
-    .not()
-    .isEmpty()
-    .withMessage("Username can't be empty"),
+    .notEmpty()
+    .withMessage("Username can't be empty")
+    .toLowerCase(),
   body("email")
     .trim()
     .escape()
-    .not()
     .if((value, { req }) => !(!req.body.email && req.body.username))
-    .isEmpty()
+    .notEmpty()
     .withMessage("Email can't be empty")
     .isEmail()
-    .withMessage("Invalid email format"),
+    .withMessage("Invalid email format")
+    .toLowerCase(),
   body("password")
     .trim()
     .escape()
@@ -83,10 +83,13 @@ signInController.post(
             failFactory([{ message: "Invalid password", path: "password" }])
           );
       }
-
       const token = await new Promise<string>((resolve, reject) => {
         jwt.sign(
-          { id: user._id, username: user.username, role: user.role },
+          {
+            id: user._id,
+            displayName: user.displayName,
+            role: user.role,
+          },
           Env.JWT_SECRET,
           (err: Error | null, token: string | undefined) => {
             if (err) {

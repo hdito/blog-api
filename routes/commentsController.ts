@@ -15,7 +15,7 @@ commentsController.get("/:postId/comments", async (req, res) => {
   const { postId } = req.params;
   try {
     const comments = await Comment.find({ postId }).populate("author", {
-      username: 1,
+      displayName: 1,
     });
     return res.status(200).json(successFactory({ comments }));
   } catch {
@@ -64,7 +64,7 @@ commentsController.delete(
     const { commentId } = req.params;
     try {
       const comment = await Comment.findById(commentId).populate("author", {
-        username: 1,
+        displayName: 1,
       });
       if (
         !(

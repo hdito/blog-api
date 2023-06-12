@@ -25,7 +25,7 @@ postsController.get(
           .sort({
             createdAt: -1,
           })
-          .populate("author", "_id username");
+          .populate("author", { displayName: 1 });
         return res.status(200).json(successFactory({ posts }));
       }
 
@@ -47,7 +47,7 @@ postsController.get(
           .sort({
             createdAt: -1,
           })
-          .populate("author", "_id username");
+          .populate("author", { displayName: 1 });
         return res.status(200).json(successFactory({ posts }));
       }
 
@@ -115,7 +115,7 @@ postsController.get(
     try {
       const postQuery = Post.findById(postId);
       if (populate === "author") {
-        postQuery.populate("author", "_id username");
+        postQuery.populate("author", { displayName: 1 });
       }
 
       const post = await postQuery;
@@ -143,7 +143,7 @@ postsController.get(
           .status(403)
           .json(errorFactory("You haven't got permission for this"));
       if (populate === "author") {
-        await post.populate("author", "_id username");
+        await post.populate("author", { displayName: 1 });
       }
       return res.status(200).json(successFactory({ post }));
     } catch (error) {

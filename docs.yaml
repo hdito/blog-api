@@ -100,6 +100,23 @@ components:
           type: string
         updatedAt:
           type: string
+    User:
+      type: object
+      preoperties:
+        _id:
+          type: string
+        username:
+          type: string
+        displayName:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+            - user
+            - admin
+            - author
   responses:
     BadRequest:
       description: The form data is invalid.
@@ -535,5 +552,109 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/UnknownError"
+  /users:
+    get:
+      summary: Returns a list of users.
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Returns an array of users.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - success
+                  data:
+                    type: object
+                    properties:
+                      users:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/UnknownError"
+  /users/{userId}:
+    get:
+      summary: Returns a specified user.
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Returns a specified user.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - success
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/UnknownError"
+    patch:
+      summary: Updates a specified user.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum:
+                    - author
+                    - user
+                    - admin
+              required:
+                - role
+      responses:
+        "200":
+          description: An update of a user's role has been successful.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - "success"
+                  data:
+                    type: object
+                    nullable: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/Forbidden"
         "500":
           $ref: "#/components/responses/UnknownError"

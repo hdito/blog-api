@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { Env } from "./env";
+import { errorFactory } from "./errorFactory";
 
 export async function extractAuthToken(
   req: Request,
@@ -10,9 +11,7 @@ export async function extractAuthToken(
   const token = req.header("Authorization")?.replace("Bearer ", "");
 
   if (!token) {
-    return res
-      .status(401)
-      .json({ status: "error", message: "Authentication required" });
+    return res.status(401).json(errorFactory("Authentication required"));
   }
 
   try {
@@ -31,9 +30,6 @@ export async function extractAuthToken(
   } catch (error) {
     return res
       .status(403)
-      .json({
-        status: "error",
-        message: "You haven't got permission for this",
-      });
+      .json(errorFactory("You haven't got permission for this"));
   }
 }

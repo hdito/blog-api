@@ -19,13 +19,16 @@ db.on("error", () => console.error("Mongo connection error"));
 
 const app = express();
 
-app.use(
-  rateLimit({
-    max: 15,
-  })
-);
-app.use(compression());
-app.use(helmet({ crossOriginResourcePolicy: false }));
+if (Env.NODE_ENV === "production") {
+  app.use(
+    rateLimit({
+      max: 15,
+    })
+  );
+  app.use(compression());
+  app.use(helmet({ crossOriginResourcePolicy: false }));
+}
+
 app.use(
   cors({
     origin: (origin, cb) => {

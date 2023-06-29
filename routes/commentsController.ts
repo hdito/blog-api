@@ -49,7 +49,7 @@ commentsController.post(
       }
 
       await comment.save();
-      return res.status(200).json({ comment });
+      return res.status(200).json(successFactory({ comment }));
     } catch (error) {
       return res.status(500).json(errorFactory("Error on creating post"));
     }
@@ -73,9 +73,10 @@ commentsController.delete(
         )
       ) {
         return res
-          .status(404)
+          .status(403)
           .json(errorFactory("You have no permission for this"));
       }
+
       await Comment.findByIdAndDelete(commentId);
       return res.status(204).json(successFactory());
     } catch {

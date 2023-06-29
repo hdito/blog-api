@@ -69,6 +69,37 @@ components:
         data:
           type: object
           nullable: true
+    Comment:
+      type: object
+      properties:
+        body:
+          type: string
+        author:
+          type: string
+        postId:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+    CommentWithPopulatedAuthor:
+      type: object
+      properties:
+        body:
+          type: string
+        author:
+          type: object
+          properties:
+            _id:
+              type: string
+            displayName:
+              type: string
+        postId:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
   responses:
     BadRequest:
       description: The form data is invalid.
@@ -301,6 +332,113 @@ paths:
                 $ref: "#/components/schemas/SuccessResponseWithEmptyPayload"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/UnknownError"
+  /posts/{postId}/comments:
+    get:
+      summary: Returns a list of comments from a specified post.
+      parameters:
+        - in: path
+          name: postId
+          schema:
+            type: string
+          required: true
+          description: ID of a post to get comments.
+      responses:
+        "200":
+          description: Returns an array of comments.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - success
+                  data:
+                    type: object
+                    properties:
+                      comments:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/CommentWithPopulatedAuthor"
+        "500":
+          $ref: "#/components/responses/UnknownError"
+    post:
+      summary: Creates a new comment for specified post.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                body:
+                  type: string
+              required:
+                - body
+      parameters:
+        - in: path
+          name: postId
+          schema:
+            type: string
+          required: true
+          description: ID of a post to create a comment.
+      responses:
+        "200":
+          description: New comment has been successfully created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - success
+                  data:
+                    type: object
+                    properties:
+                      comment:
+                        $ref: "#/components/schemas/Comment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/UnknownError"
+  /posts/{postId}/comments/{commentId}:
+    delete:
+      summary: Deletes a comment for a post.
+      parameters:
+        - in: path
+          name: postId
+          schema:
+            type: string
+          required: true
+          description: ID of a post with a comment to delete.
+        - in: path
+          name: commentId
+          schema:
+            type: string
+          required: true
+          description: ID of a comment to delete.
+      responses:
+        "204":
+          description: Comment has been successfully deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseWithEmptyPayload"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":

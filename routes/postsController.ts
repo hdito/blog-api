@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { body, query, validationResult } from "express-validator";
+import { body, validationResult } from "express-validator";
 import { Post } from "../models/post";
 import { checkIsValidRole } from "../utils/checkIsValidRole";
 import { errorFactory } from "../utils/errorFactory";
@@ -10,56 +10,21 @@ import { successFactory } from "../utils/successFactory";
 
 const postsController = Router();
 
-postsController.get(
-  "/",
-  async (req, res, next) => {
-    const { type, populate } = req.query;
-
-    if (type === "own") {
-      return next();
+postsController.get("/", async (req, res) => {
+  const { populate } = req.query;
+  try {
+    const postsQuery = Post.find({ isPublished: true }).sort({
+      createdAt: -1,
+    });
+    if (populate === "author") {
+      postsQuery.populate("author", { displayName: 1 });
     }
-
-    try {
-      if (populate === "author") {
-        const posts = await Post.find({ isPublished: true })
-          .sort({
-            createdAt: -1,
-          })
-          .populate("author", { displayName: 1 });
-        return res.status(200).json(successFactory({ posts }));
-      }
-
-      const posts = await Post.find({ isPublished: true }).sort({
-        createdAt: -1,
-      });
-      return res.status(200).json(successFactory({ posts }));
-    } catch (error) {
-      return res.status(500).json(errorFactory("Error on loading posts"));
-    }
-  },
-  extractAuthToken,
-  checkIsValidRole(["author", "admin"]),
-  async (req, res) => {
-    const { populate } = req.query;
-    try {
-      if (populate === "author") {
-        const posts = await Post.find({ author: req!.user!.id })
-          .sort({
-            createdAt: -1,
-          })
-          .populate("author", { displayName: 1 });
-        return res.status(200).json(successFactory({ posts }));
-      }
-
-      const posts = await Post.find({ author: req!.user!.id }).sort({
-        createdAt: -1,
-      });
-      return res.status(200).json(successFactory({ posts }));
-    } catch (error) {
-      return res.status(500).json(errorFactory("Unknown error has occured"));
-    }
+    const posts = await postsQuery;
+    return res.status(200).json(successFactory({ posts }));
+  } catch (error) {
+    return res.status(500).json(errorFactory("Error on loading posts"));
   }
-);
+});
 
 postsController.post(
   "/",
@@ -99,61 +64,28 @@ postsController.post(
   }
 );
 
-postsController.get(
-  "/:postId",
-  query("type").isString().optional(),
-  query("populate").isString().optional(),
-  async (req, res, next) => {
-    const result = validationResult(req);
-    if (!result.isEmpty()) {
+postsController.get("/:postId", async (req, res) => {
+  const { populate } = req.query;
+  const { postId } = req.params;
+  try {
+    const postQuery = Post.findById(postId);
+    if (populate === "author") {
+      postQuery.populate("author", { displayName: 1 });
+    }
+    const post = await postQuery;
+    if (!post) {
+      return res.status(404).json(errorFactory("Post not found"));
+    }
+    if (!post.isPublished) {
       return res
-        .status(400)
-        .json(failFactory(result.formatWith(formatErrors).array()));
+        .status(403)
+        .json(errorFactory("You haven't got permission for this"));
     }
-
-    const { type, populate } = req.query;
-    if (type === "preview") return next();
-
-    const { postId } = req.params;
-    try {
-      const postQuery = Post.findById(postId);
-      if (populate === "author") {
-        postQuery.populate("author", { displayName: 1 });
-      }
-
-      const post = await postQuery;
-      if (!post) return res.status(404).json(errorFactory("Post not found"));
-      if (!post.isPublished)
-        return res
-          .status(403)
-          .json(errorFactory("You haven't got permission for this"));
-
-      return res.status(200).json(successFactory({ post }));
-    } catch (error) {
-      return res.status(500).json(errorFactory("Error on loading post"));
-    }
-  },
-  extractAuthToken,
-  checkIsValidRole(["author", "admin"]),
-  async (req, res) => {
-    const { postId } = req.params;
-    const { populate } = req.query;
-    try {
-      const post = await Post.findById(postId);
-      if (!post) return res.status(404).json(errorFactory("Post not found"));
-      if (post.author._id.toString() !== req.user!.id)
-        return res
-          .status(403)
-          .json(errorFactory("You haven't got permission for this"));
-      if (populate === "author") {
-        await post.populate("author", { displayName: 1 });
-      }
-      return res.status(200).json(successFactory({ post }));
-    } catch (error) {
-      return res.status(500).json(errorFactory("Error on loading post"));
-    }
+    return res.status(200).json(successFactory({ post }));
+  } catch (error) {
+    return res.status(500).json(errorFactory("Error on loading post"));
   }
-);
+});
 
 postsController.patch(
   "/:postId",

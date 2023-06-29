@@ -1,13 +1,16 @@
+import compression from "compression";
+import cors from "cors";
 import express from "express";
+import rateLimit from "express-rate-limit";
+import fs from "fs";
+import helmet from "helmet";
 import mongoose from "mongoose";
+import swaggerUi from "swagger-ui-express";
+import yaml from "yaml";
 import apiController from "./routes/apiController";
 import { Env } from "./utils/env";
 import { errorHadler } from "./utils/errorHandler";
 import { notFoundHandler } from "./utils/notFoundHandler";
-import cors from "cors";
-import compression from "compression";
-import helmet from "helmet";
-import rateLimit from "express-rate-limit";
 
 const whitelist = Env.SUPPORTED_URLS.split(" ");
 
@@ -47,6 +50,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use("/api", apiController);
+
+const file = fs.readFileSync("./docs.yaml", "utf8");
+const swaggerDocument = yaml.parse(file);
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(notFoundHandler);
 app.use(errorHadler);

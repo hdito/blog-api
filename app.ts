@@ -12,8 +12,6 @@ import { Env } from "./utils/env";
 import { errorHadler } from "./utils/errorHandler";
 import { notFoundHandler } from "./utils/notFoundHandler";
 
-const whitelist = Env.SUPPORTED_URLS.split(" ");
-
 mongoose
   .connect(Env.DB_URL)
   .catch(() => console.error("Mongo connection error"));
@@ -32,20 +30,7 @@ if (Env.NODE_ENV === "production") {
   app.use(helmet({ crossOriginResourcePolicy: false }));
 }
 
-app.use(
-  cors({
-    origin: (origin, cb) => {
-      if (
-        (origin && whitelist.includes(origin)) ||
-        (Env.NODE_ENV === "development" && !origin)
-      ) {
-        cb(null, true);
-      } else {
-        cb(new Error("Not allowed by CORS"));
-      }
-    },
-  })
-);
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

@@ -391,6 +391,8 @@ paths:
             type: string
           required: true
           description: ID of a post to create a comment.
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: New comment has been successfully created.
@@ -421,6 +423,8 @@ paths:
   /posts/{postId}/comments/{commentId}:
     delete:
       summary: Deletes a comment for a post.
+      security:
+        - BearerAuth: []
       parameters:
         - in: path
           name: postId
@@ -458,6 +462,8 @@ paths:
             enum:
               - author
           description: Spiecifies populated fields in post.
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: Returns an array of user's post.
@@ -490,6 +496,8 @@ paths:
     /my-posts/{postId}:
       get:
         summary: Returns a user's post.
+        security:
+          - BearerAuth: []
         parameters:
           - in: query
             name: populate

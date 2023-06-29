@@ -117,6 +117,26 @@ components:
             - user
             - admin
             - author
+    CredentialsWithUsername:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+        - username
+        - password
+    CredentialsWithEmail:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
   responses:
     BadRequest:
       description: The form data is invalid.
@@ -688,6 +708,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseWithEmptyPayload"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/UnknownError"
+  /sign-in:
+    post:
+      summary: Signs in already registrated user.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/CredentialsWithEmail"
+                - $ref: "#/components/schemas/CredentialsWithUsername"
+      responses:
+        "200":
+          description: Returns user a jwt-token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - success
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":

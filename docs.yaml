@@ -7,3 +7,303 @@ servers:
     description: Production server
   - url: http://localhost:3000/api
     description: Development server
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    Post:
+      type: object
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+    PostWithPopulatedAuthor:
+      type: object
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        content:
+          type: string
+        author:
+          type: object
+          properties:
+            _id:
+              type: string
+            displayName:
+              type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - error
+        message:
+          type: string
+    SuccessResponseWithEmptyPayload:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+        data:
+          type: object
+          nullable: true
+  responses:
+    BadRequest:
+      description: The form data is invalid.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    path:
+                      type: string
+                    message:
+                      type: string
+    UnknownError:
+      description: An unknown error has occured on a server.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: User is not authorized.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: User has no access for this route.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Data is not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+paths:
+  /posts:
+    get:
+      summary: Returns a list of published posts.
+      parameters:
+        - in: query
+          name: populate
+          schema:
+            type: string
+            enum: [author]
+          description: Populated fields on a post
+      responses:
+        "200":
+          description: Returns an array of posts.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - "success"
+                  data:
+                    type: object
+                    properties:
+                      posts:
+                        type: array
+                        items:
+                          oneOf:
+                            - $ref: "#/components/schemas/PostWithPopulatedAuthor"
+                            - $ref: "#/components/schemas/Post"
+        "500":
+          $ref: "#/components/responses/UnknownError"
+    post:
+      summary: Creates a new post.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                content:
+                  type: string
+                isPublished:
+                  type: boolean
+              required:
+                - title
+      responses:
+        "200":
+          description: Returns a created post.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - "success"
+                  data:
+                    type: object
+                    properties:
+                      post:
+                        $ref: "#/components/schemas/Post"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/UnknownError"
+  /posts/{postId}:
+    get:
+      summary: Returns a post.
+      parameters:
+        - in: path
+          name: postId
+          schema:
+            type: string
+          required: true
+          description: ID of a post to return
+        - in: query
+          name: populate
+          schema:
+            type: string
+            enum: [author]
+          description: Populated fields on a post
+      responses:
+        "200":
+          description: Returns a post object.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - "success"
+                  data:
+                    type: object
+                    properties:
+                      post:
+                        $ref: "#/components/schemas/Post"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/UnknownError"
+    patch:
+      summary: Updates a post with a new data.
+      description: Allows authors and admins to update a post.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: postId
+          schema:
+            type: string
+          required: true
+          description: An ID of a post to update.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                content:
+                  type: string
+                isPublished:
+                  type: boolean
+      responses:
+        "200":
+          description: An update of a post has been successful.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - "success"
+                  data:
+                    type: object
+                    nullable: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/UnknownError"
+    delete:
+      summary: Removes a post from a database.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: postId
+          schema:
+            type: string
+          required: true
+          description: ID of a post to delete.
+      responses:
+        "204":
+          description: Deleting of a post has been successful.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseWithEmptyPayload"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/UnknownError"

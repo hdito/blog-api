@@ -155,7 +155,7 @@ postsController.get(
   }
 );
 
-postsController.put(
+postsController.patch(
   "/:postId",
   extractAuthToken,
   checkIsValidRole(["author", "admin"]),

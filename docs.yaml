@@ -447,3 +447,85 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "500":
           $ref: "#/components/responses/UnknownError"
+  /my-posts:
+    get:
+      summary: Returns a list of user's posts.
+      parameters:
+        - in: query
+          name: populate
+          schema:
+            type: string
+            enum:
+              - author
+          description: Spiecifies populated fields in post.
+      responses:
+        "200":
+          description: Returns an array of user's post.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - success
+                  data:
+                    type: object
+                    properties:
+                      posts:
+                        type: array
+                        items:
+                          oneOf:
+                            - $ref: "#/components/schemas/Post"
+                            - $ref: "#/components/schemas/PostWithPopulatedAuthor"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/UnknownError"
+    /my-posts/{postId}:
+      get:
+        summary: Returns a user's post.
+        parameters:
+          - in: query
+            name: populate
+            schema:
+              type: string
+              enum:
+                - author
+            description: Spiecifies populated fields in post.
+          - in: path
+            name: postId
+            schema:
+              type: string
+            required: true
+            description: ID of a post to return.
+        responses:
+          "200":
+            description: Returns a user's post object.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - success
+                    data:
+                      type: object
+                      properties:
+                        post:
+                          oneOf:
+                            - $ref: "#/components/schemas/Post"
+                            - $ref: "#/components/schemas/PostWithPopulatedAuthor"
+          "401":
+            $ref: "#/components/responses/Unauthorized"
+          "403":
+            $ref: "#/components/responses/Forbidden"
+          "500":
+            $ref: "#/components/responses/UnknownError"

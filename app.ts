@@ -2,11 +2,8 @@ import compression from "compression";
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
-import fs from "fs";
 import helmet from "helmet";
 import mongoose from "mongoose";
-import swaggerUi from "swagger-ui-express";
-import yaml from "yaml";
 import apiController from "./routes/apiController";
 import { Env } from "./utils/env";
 import { errorHadler } from "./utils/errorHandler";
@@ -36,13 +33,9 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use("/api", apiController);
 
-const file = fs.readFileSync("./docs.yaml", "utf8");
-const swaggerDocument = yaml.parse(file);
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-
 app.use(notFoundHandler);
 app.use(errorHadler);
 
-app.listen(Env.PORT, () =>
+app.listen(Number(Env.PORT), "0.0.0.0", () =>
   console.log(`Server is running on port ${Env.PORT}`)
 );

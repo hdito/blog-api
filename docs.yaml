@@ -183,6 +183,8 @@ components:
 paths:
   /posts:
     get:
+      tags:
+        - Posts
       summary: Returns a list of published posts.
       parameters:
         - in: query
@@ -215,6 +217,8 @@ paths:
         "500":
           $ref: "#/components/responses/UnknownError"
     post:
+      tags:
+        - Posts
       summary: Creates a new post.
       security:
         - BearerAuth: []
@@ -262,6 +266,8 @@ paths:
           $ref: "#/components/responses/UnknownError"
   /posts/{postId}:
     get:
+      tags:
+        - Posts
       summary: Returns a post.
       parameters:
         - in: path
@@ -302,6 +308,8 @@ paths:
         "500":
           $ref: "#/components/responses/UnknownError"
     patch:
+      tags:
+        - Posts
       summary: Updates a post with a new data.
       description: Allows authors and admins to update a post.
       security:
@@ -352,6 +360,8 @@ paths:
         "500":
           $ref: "#/components/responses/UnknownError"
     delete:
+      tags:
+        - Posts
       summary: Removes a post from a database.
       security:
         - BearerAuth: []
@@ -379,6 +389,8 @@ paths:
           $ref: "#/components/responses/UnknownError"
   /posts/{postId}/comments:
     get:
+      tags:
+        - Comments
       summary: Returns a list of comments from a specified post.
       parameters:
         - in: path
@@ -409,6 +421,8 @@ paths:
         "500":
           $ref: "#/components/responses/UnknownError"
     post:
+      tags:
+        - Comments
       summary: Creates a new comment for specified post.
       requestBody:
         required: true
@@ -459,6 +473,8 @@ paths:
           $ref: "#/components/responses/UnknownError"
   /posts/{postId}/comments/{commentId}:
     delete:
+      tags:
+        - Comments
       summary: Deletes a comment for a post.
       security:
         - BearerAuth: []
@@ -490,6 +506,8 @@ paths:
           $ref: "#/components/responses/UnknownError"
   /my-posts:
     get:
+      tags:
+        - User's posts
       summary: Returns a list of user's posts.
       parameters:
         - in: query
@@ -530,6 +548,8 @@ paths:
           $ref: "#/components/responses/UnknownError"
   /my-posts/{postId}:
     get:
+      tags:
+        - User's posts
       summary: Returns a user's post.
       security:
         - BearerAuth: []
@@ -576,6 +596,8 @@ paths:
           $ref: "#/components/responses/UnknownError"
   /users:
     get:
+      tags:
+        - Users
       summary: Returns a list of users.
       security:
         - BearerAuth: []
@@ -606,6 +628,8 @@ paths:
           $ref: "#/components/responses/UnknownError"
   /users/{userId}:
     get:
+      tags:
+        - Users
       summary: Returns a specified user.
       security:
         - BearerAuth: []
@@ -635,7 +659,9 @@ paths:
         "500":
           $ref: "#/components/responses/UnknownError"
     patch:
-      summary: Updates a specified user.
+      tags:
+        - Users
+      summary: Updates role of the specified user.
       security:
         - BearerAuth: []
       requestBody:
@@ -680,6 +706,8 @@ paths:
           $ref: "#/components/responses/UnknownError"
   /sign-up:
     post:
+      tags:
+        - Sign up
       summary: Signs up user into the blog application.
       requestBody:
         required: true
@@ -714,6 +742,8 @@ paths:
           $ref: "#/components/responses/UnknownError"
   /sign-in:
     post:
+      tags:
+        - Sign in
       summary: Signs in already registrated user.
       requestBody:
         required: true

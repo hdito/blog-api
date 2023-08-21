@@ -9,33 +9,28 @@ A Node.js server for a blog platform.
 - MongoDB
 - Mongoose
 - JWT
-- Swagger
 
-## Project setup
+## Recommended development setup
 
-1. Clone the project with the command
+Prerequisites:
+
+- Docker Desktop
+
+1. Clone the project with the command:
 
 ```bash
 git clone https://github.com/hdito/blog-api.git
 ```
 
-2. Install dependencies with the command
+2. Create a file with the value of JWT secret in the project root.
+3. Run Docker container with the development environment.
 
 ```bash
-pnpm install
+docker compose up -d
 ```
 
-3. Create the file `.env` in the root of the project. Fill its contents with environment variables values according to `.env.example` with the url of a MongoDB database for this project in the variable `DB_URL`.
-4. You could start a development server with the command
+This command will start an application server with MongoDB. Now you could send your requests to `localhost:3000`
 
 ```bash
-pnpm dev
+curl http://localhost:3000/api/posts
 ```
-
-And a production server with
-
-```bash
-pnpm start
-```
-
-5. To view docs of the project switch to the `feature/docs` branch and go to the url `http://localhost:<PORT>/api/docs` in a browser.

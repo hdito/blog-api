@@ -1,0 +1,40 @@
+services:
+  app:
+    build:
+      target: dev
+    command: sh -c "npm run dev"
+    ports:
+      - 3000:3000
+    working_dir: /app
+    volumes:
+      - type: bind
+        source: ./src
+        target: /app/src
+      - notused:/app/node_modules/
+    environment:
+      PORT: 3000
+      DB_URL: mongodb://mongodb:27017/blog-api
+      JWT_SECRET: /run/secrets/jwt_secret
+    secrets:
+      - jwt_secret
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:4
+    ports:
+      - 27017:27017
+    restart: always
+    environment:
+      MONGO_INITDB_DATABASE: blog-api
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  notused:
+  mongo_data:
+
+
+secrets:
+  jwt_secret:
+    file: jwt_secret.txt

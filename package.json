@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "description": "",
-  "main": "app.ts",
+  "main": "./src/app.ts",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development tsx watch ./app.ts",
-    "start": "cross-env NODE_ENV=production tsx ./app.ts",
+    "dev": "cross-env NODE_ENV=development tsx watch ./src/app.ts",
+    "start": "cross-env NODE_ENV=production tsx ./src/app.ts",
     "test": "vitest"
   },
   "keywords": [],
@@ -31,12 +31,13 @@
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.2.0",
     "tsx": "^3.12.7",
-    "typescript": "^5.0.4",
-    "yaml": "^2.3.1"
+    "typescript": "^5.0.4"
   },
   "devDependencies": {
+    "@types/supertest": "^2.0.12",
     "mongodb-memory-server": "^8.13.0",
     "prettier": "^2.8.8",
+    "supertest": "^6.3.3",
     "vitest": "^0.32.0"
   }
 }

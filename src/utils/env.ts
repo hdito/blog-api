@@ -1,4 +1,5 @@
 import dotenv from "dotenv-safe";
+import fs from "fs";
 
 class EnvVariables {
   PORT: string;
@@ -10,8 +11,8 @@ class EnvVariables {
     dotenv.config();
     this.PORT = process.env.PORT;
     this.DB_URL = process.env.DB_URL;
-    this.JWT_SECRET = process.env.JWT_SECRET;
     this.NODE_ENV = process.env.NODE_ENV;
+    this.JWT_SECRET = fs.readFileSync(process.env.JWT_SECRET, "utf-8");
   }
 }
 

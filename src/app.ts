@@ -10,7 +10,8 @@ import { errorHadler } from "./utils/errorHandler";
 import { notFoundHandler } from "./utils/notFoundHandler";
 
 mongoose
-  .connect(Env.DB_URL)
+  .connect(Env.DB_URL, { connectTimeoutMS: 2000 })
+  .then(() => console.log("Connected to DB!!!"))
   .catch(() => console.error("Mongo connection error"));
 const db = mongoose.connection;
 db.on("error", () => console.error("Mongo connection error"));
@@ -39,3 +40,5 @@ app.use(errorHadler);
 app.listen(Number(Env.PORT), "0.0.0.0", () =>
   console.log(`Server is running on port ${Env.PORT}`)
 );
+
+console.log(Env.JWT_SECRET);
